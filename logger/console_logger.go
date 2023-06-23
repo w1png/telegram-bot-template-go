@@ -34,6 +34,6 @@ func (l *ConsoleLogger) LogUpdate(update tg.Update, startTime time.Time) {
     text = fmt.Sprintf("Callback data: %s", update.CallbackQuery.Data)
   }
 
-  log.Printf("Update: [From: %s] [Data: %s] [Took: %s]\n", username, text, time.Since(startTime))
+  log.Printf("[%s] Update: [From: %s] [Data: %s] [Took: %s]\n", Info.String(), username, text, time.Since(startTime))
 }
 
