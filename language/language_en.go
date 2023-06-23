@@ -1,6 +1,6 @@
 package language
 
-import "github.com/w1png/paid-access-telegram-bot/errors"
+import "github.com/w1png/telegram-bot-template/errors"
 
 type English struct {
   Values map[LanguageString]string
