@@ -10,6 +10,7 @@ import (
 	"github.com/w1png/telegram-bot-template/language"
 	"github.com/w1png/telegram-bot-template/logger"
 	"github.com/w1png/telegram-bot-template/messages"
+	"github.com/w1png/telegram-bot-template/states"
 )
 
 type Bot struct {
@@ -83,14 +84,27 @@ func (b *Bot) HandleUpdate(update tg.Update) {
   }
 
   if update.Message != nil && !update.Message.IsCommand() {
-    switch update.Message.Text {
-    default:
-      msg, err = messages.UnknownMessage(update.Message, update)
+    currentState, ok := states.StateMachineInstance.States[states.NewStateUser(
+      update.Message.Chat.ID,
+      update.Message.From.ID),
+    ]
+
+    if ok {
+      msg, err = currentState.OnMessage(update.Message.From.ID, update.Message.Chat.ID, update.Message.Text)
+    } else {
+      switch update.Message.Text {
+      default:
+        msg, err = messages.UnknownMessage(update.Message, update)
+      }
     }
   }
 
   // send or edit the msg
   if err == nil {
+    if msg.ReplyToMessageID == -1 {
+      return
+    }
+
     if shouldEdit {
       markup := tg.NewInlineKeyboardMarkup([]tg.InlineKeyboardButton{})
       if msg.ReplyMarkup != nil {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/w1png/telegram-bot-template/language"
 	"github.com/w1png/telegram-bot-template/logger"
+	"github.com/w1png/telegram-bot-template/states"
 	"github.com/w1png/telegram-bot-template/storage"
 	"github.com/w1png/telegram-bot-template/utils"
 )
@@ -15,6 +16,8 @@ func main() {
   if err != nil {
     log.Fatal(err)
   }
+
+  states.InitStateMachine()
 
   err = logger.InitLogger(config.LoggerType)
   if err != nil {
