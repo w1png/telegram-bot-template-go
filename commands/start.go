@@ -6,13 +6,13 @@ import (
 )
 
 func StartCommand(msg *tg.Message, update tg.Update) (tg.MessageConfig, error) {
-  text, err := language.CurrentLanguage.Get(language.Start)
-  if err != nil {
-    return tg.MessageConfig{}, err
-  }
+	text, err := language.CurrentLanguage.Get(language.Start)
+	if err != nil {
+		return tg.MessageConfig{}, err
+	}
 
-  replyMsg := tg.NewMessage(update.Message.Chat.ID, text)
-  replyMsg.ReplyToMessageID = update.Message.MessageID
+	replyMsg := tg.NewMessage(update.Message.Chat.ID, text)
+	replyMsg.ReplyToMessageID = update.Message.MessageID
 
-  return replyMsg, nil
+	return replyMsg, nil
 }

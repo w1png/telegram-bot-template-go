@@ -2,13 +2,13 @@ package logger
 
 import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-  "time"
+	"time"
 )
 
-type NoLogger struct {}
+type NoLogger struct{}
 
 func NewNoLogger() *NoLogger {
-  return &NoLogger{}
+	return &NoLogger{}
 }
 
 func (l *NoLogger) Log(level LogLevel, message string) {}

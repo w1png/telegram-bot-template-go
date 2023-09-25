@@ -5,24 +5,23 @@ import (
 )
 
 type Language interface {
-  Get(key LanguageString) (string, error)
+	Get(key LanguageString) (string, error)
 }
 
 var CurrentLanguage Language
 
 func setLanguage(language Language) {
-  CurrentLanguage = language
+	CurrentLanguage = language
 }
 
 func InitLanguage(language string) error {
-  switch language {
-  case "en":
-    setLanguage(NewEnglish())
-  case "ru":
-    setLanguage(NewRussian())
-  default:
-    return errors.NewLanguageNotFoundError(language)
-  }
-  return nil
+	switch language {
+	case "en":
+		setLanguage(NewEnglish())
+	case "ru":
+		setLanguage(NewRussian())
+	default:
+		return errors.NewLanguageNotFoundError(language)
+	}
+	return nil
 }
-

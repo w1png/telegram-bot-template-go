@@ -1,13 +1,12 @@
 package storage
 
-type Storage interface {}
+type Storage interface{}
 
 var CurrentStorage Storage
 
 func InitStorage(storageType string) error {
-  switch storageType {
-  }
+	switch storageType {
+	}
 
-  return nil
+	return nil
 }
-

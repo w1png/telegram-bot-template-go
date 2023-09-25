@@ -6,9 +6,9 @@ import (
 )
 
 func TestCommand(msg *tg.Message, update tg.Update) (tg.MessageConfig, error) {
-  state := states.NewNameState()
+	state := states.NewNameState()
 
-  states.StateMachineInstance.AddState(states.NewStateUser(msg.From.ID, msg.Chat.ID), state)
+	states.StateMachineInstance.AddState(states.NewStateUser(msg.From.ID, msg.Chat.ID), state)
 
-  return state.OnEnter(msg.From.ID, msg.Chat.ID)
+	return state.OnEnter(msg.From.ID, msg.Chat.ID)
 }

@@ -3,24 +3,23 @@ package states
 var StateMachineInstance *StateMachine
 
 type StateMachine struct {
-  States map[StateUser]State
+	States map[StateUser]State
 }
 
 func NewStateMachine() *StateMachine {
-  return &StateMachine{
-    States: make(map[StateUser]State),
-  }
+	return &StateMachine{
+		States: make(map[StateUser]State),
+	}
 }
 
 func InitStateMachine() {
-  StateMachineInstance = NewStateMachine()
+	StateMachineInstance = NewStateMachine()
 }
 
 func (sm *StateMachine) AddState(user StateUser, state State) {
-  sm.States[user] = state
+	sm.States[user] = state
 }
 
 func (sm *StateMachine) RemoveState(user StateUser) {
-  delete(sm.States, user)
+	delete(sm.States, user)
 }
-
