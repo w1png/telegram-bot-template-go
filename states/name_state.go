@@ -23,10 +23,16 @@ func (s *NameState) OnExit(id int64, chatID int64) (tg.MessageConfig, error) {
 
 func (s *NameState) OnMessage(id int64, chatID int64, message string) (tg.MessageConfig, error) {
 	s.Name = message
-	msg := tg.NewMessage(chatID, "Nice to meet you, "+s.Name+"!")
 	_, err := s.OnExit(id, chatID)
+	if err != nil {
+		return tg.MessageConfig{}, err
+	}
 
-	return msg, err
+	state := NewAgeState()
+	state.(*AgeState).Name = s.Name
+	StateMachineInstance.AddState(NewStateUser(chatID, chatID), state)
+
+	return state.OnEnter(id, chatID)
 }
 
 func (s NameState) String() string {
