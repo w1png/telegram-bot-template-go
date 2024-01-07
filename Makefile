@@ -1,14 +1,5 @@
-SHELL := /bin/zsh
+build-docker:
+	docker build -t telegram-bot-template-go .
 
-.PHONY: run build lint
-
-run:
-	go run .
-
-build:
-	go build
-
-
-lint:
-	golangci-lint run
-
+run-docker:
+	docker-compose up -d

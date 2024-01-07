@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  myapp:
+    image: makeup
+    environment:
+      TELEGRAM_TOKEN: your_token
+      STORAGE_TYPE: sqlite
+      LANGUAGE: en
+      LOGGER_TYPE: console
