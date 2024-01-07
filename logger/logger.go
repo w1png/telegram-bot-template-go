@@ -5,6 +5,7 @@ import (
 	"time"
 
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/w1png/telegram-bot-template/config"
 	"github.com/w1png/telegram-bot-template/errors"
 )
 
@@ -13,22 +14,22 @@ type Logger interface {
 	LogUpdate(update tg.Update, startTime time.Time)
 }
 
-var CurrentLogger Logger
+var LoggerInstance Logger
 
-func InitLogger(loggerType string) error {
-	switch loggerType {
+func InitLogger() error {
+	switch config.ConfigInstance.LoggerType {
 	case "console":
-		CurrentLogger = NewConsoleLogger()
+		LoggerInstance = NewConsoleLogger()
 	case "no":
-		CurrentLogger = NewNoLogger()
+		LoggerInstance = NewNoLogger()
 	case "":
 		log.Println("No logger type specified, using no logger")
-		CurrentLogger = NewNoLogger()
+		LoggerInstance = NewNoLogger()
 	default:
-		return errors.NewLoggerNotFoundError(loggerType)
+		return errors.NewLoggerNotFoundError(config.ConfigInstance.LoggerType)
 	}
 
-	CurrentLogger = NewConsoleLogger()
+	LoggerInstance = NewConsoleLogger()
 
 	return nil
 }

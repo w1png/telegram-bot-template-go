@@ -6,7 +6,7 @@ import (
 )
 
 func HelpCommand(msg *tg.Message, update tg.Update) (tg.MessageConfig, error) {
-	text, err := language.CurrentLanguage.Get(language.Help)
+	text, err := language.LanguageInstance.Get(language.Help)
 	if err != nil {
 		return tg.MessageConfig{}, err
 	}

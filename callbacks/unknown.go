@@ -6,7 +6,7 @@ import (
 )
 
 func UnknownCallback(msg *tg.Message, update tg.Update) (tg.MessageConfig, error) {
-	text, err := language.CurrentLanguage.Get(language.UnknownCallback)
+	text, err := language.LanguageInstance.Get(language.UnknownCallback)
 	if err != nil {
 		return tg.MessageConfig{}, err
 	}

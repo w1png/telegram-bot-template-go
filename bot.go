@@ -1,16 +1,17 @@
 package main
 
 import (
-	"log"
 	"time"
 
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/w1png/telegram-bot-template/callbacks"
 	"github.com/w1png/telegram-bot-template/commands"
+	"github.com/w1png/telegram-bot-template/config"
 	"github.com/w1png/telegram-bot-template/language"
 	"github.com/w1png/telegram-bot-template/logger"
 	"github.com/w1png/telegram-bot-template/messages"
 	"github.com/w1png/telegram-bot-template/states"
+	"github.com/w1png/telegram-bot-template/storage"
 )
 
 type Bot struct {
@@ -18,12 +19,12 @@ type Bot struct {
 	timeout int
 }
 
-func NewBot(token string, timeout int, debug bool) (*Bot, error) {
-	bot, err := tg.NewBotAPI(token)
+func NewBot(timeout int) (*Bot, error) {
+	bot, err := tg.NewBotAPI(config.ConfigInstance.TelegramToken)
 	if err != nil {
 		return nil, err
 	}
-	bot.Debug = debug
+	bot.Debug = config.ConfigInstance.IsDebug
 	return &Bot{Bot: bot, timeout: timeout}, nil
 }
 
@@ -55,6 +56,20 @@ func (b *Bot) HandleUpdate(update tg.Update) {
 	var err error
 	var shouldEdit bool
 	var editMessage tg.Message
+
+	if err = storage.StorageInstance.CreateUserIfDoesntExist(update.Message.From.ID); err != nil {
+		logger.LoggerInstance.Log(logger.Error, err.Error())
+		s, err := language.LanguageInstance.Get(language.UnknownError)
+		if err != nil {
+			logger.LoggerInstance.Log(logger.Fatal, err.Error())
+		}
+		_, err = b.Bot.Send(tg.NewMessage(update.Message.Chat.ID, s))
+		if err != nil {
+			logger.LoggerInstance.Log(logger.Fatal, err.Error())
+		}
+
+		return
+	}
 
 	// callbacks
 	if update.CallbackQuery != nil {
@@ -116,27 +131,30 @@ func (b *Bot) HandleUpdate(update tg.Update) {
 				msg.Text,
 				markup,
 			)); err != nil {
-				logger.CurrentLogger.Log(logger.Error, err.Error())
+				logger.LoggerInstance.Log(logger.Error, err.Error())
 			}
 		} else {
 			if _, err = b.Bot.Send(msg); err != nil {
-				log.Println(err)
+				logger.LoggerInstance.Log(logger.Error, err.Error())
 			}
 		}
 	}
 
 	// if error occured during callback or command processing
 	if err != nil {
-		text, _ := language.CurrentLanguage.Get(language.UnknownError)
+		text, err := language.LanguageInstance.Get(language.UnknownError)
+		if err != nil {
+			logger.LoggerInstance.Log(logger.Fatal, err.Error())
+		}
 		msg = tg.NewMessage(update.Message.Chat.ID, text)
 		msg.ReplyToMessageID = update.Message.MessageID
 
 		if _, err = b.Bot.Send(msg); err != nil {
-			logger.CurrentLogger.Log(logger.Error, err.Error())
+			logger.LoggerInstance.Log(logger.Error, err.Error())
 		}
 
-		logger.CurrentLogger.Log(logger.Error, err.Error())
+		logger.LoggerInstance.Log(logger.Error, err.Error())
 	}
 
-	logger.CurrentLogger.LogUpdate(update, startTime)
+	logger.LoggerInstance.LogUpdate(update, startTime)
 }

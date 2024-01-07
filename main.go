@@ -1,48 +1,57 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
+	"os"
+	"os/signal"
 
+	"github.com/w1png/telegram-bot-template/config"
 	"github.com/w1png/telegram-bot-template/language"
 	"github.com/w1png/telegram-bot-template/logger"
 	"github.com/w1png/telegram-bot-template/states"
 	"github.com/w1png/telegram-bot-template/storage"
-	"github.com/w1png/telegram-bot-template/utils"
 )
 
 func main() {
-	config := &utils.Config{}
-	err := config.GatherVariables()
-	if err != nil {
-		log.Fatal(err)
+	var err error
+	if err = config.InitConfig(); err != nil {
+		logger.LoggerInstance.Log(logger.Fatal, err.Error())
 	}
 
 	states.InitStateMachine()
 
-	err = logger.InitLogger(config.LoggerType)
-	if err != nil {
+	if err = logger.InitLogger(); err != nil {
 		log.Fatal(err)
 	}
 
-	err = storage.InitStorage(config.StorageType)
+	err = storage.InitStorage()
 	if err != nil {
-		logger.CurrentLogger.Log(logger.Fatal, err.Error())
+		logger.LoggerInstance.Log(logger.Fatal, err.Error())
 	}
 
-	err = language.InitLanguage(config.Language)
+	err = language.InitLanguage()
 	if err != nil {
-		logger.CurrentLogger.Log(logger.Fatal, err.Error())
+		logger.LoggerInstance.Log(logger.Fatal, err.Error())
 	}
 
-	bot, err := NewBot(config.TelegramToken, 60, false)
+	bot, err := NewBot(60)
 	if err != nil {
-		logger.CurrentLogger.Log(logger.Fatal, err.Error())
+		logger.LoggerInstance.Log(logger.Fatal, err.Error())
 	}
 
 	log.Printf("Bot started as @%v\n", bot.Bot.Self.UserName)
-	if err := bot.Run(); err != nil {
-		logger.CurrentLogger.Log(logger.Fatal, err.Error())
-	}
+	go func() {
+		if err := bot.Run(); err != nil {
+			logger.LoggerInstance.Log(logger.Fatal, err.Error())
+		}
+	}()
 
-	log.Println("Bot stopped")
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	defer stop()
+
+	<-ctx.Done()
+	fmt.Printf("Shutting down bot\n")
+	bot.Stop()
 }

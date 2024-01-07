@@ -6,7 +6,7 @@ import (
 )
 
 func UnknownCommand(msg *tg.Message, update tg.Update) (tg.MessageConfig, error) {
-	text, err := language.CurrentLanguage.Get(language.UnknownCommand)
+	text, err := language.LanguageInstance.Get(language.UnknownCommand)
 	if err != nil {
 		return tg.MessageConfig{}, err
 	}
