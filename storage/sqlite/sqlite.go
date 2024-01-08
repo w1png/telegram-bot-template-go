@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"github.com/w1png/telegram-bot-template/config"
 	"github.com/w1png/telegram-bot-template/errors"
 	"github.com/w1png/telegram-bot-template/models"
 	"gorm.io/driver/sqlite"
@@ -16,7 +17,7 @@ func NewSQLiteStorage() (*SQLiteStorage, error) {
 	storage := &SQLiteStorage{}
 
 	var err error
-	if storage.DB, err = gorm.Open(sqlite.Open("database.db"), &gorm.Config{
+	if storage.DB, err = gorm.Open(sqlite.Open(config.ConfigInstance.SQLitePath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	}); err != nil {
 		return nil, errors.NewDatabaseConnectionError(err.Error())
