@@ -7,7 +7,6 @@ import (
 	"time"
 
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/w1png/telegram-bot-template/states"
 )
 
 type ConsoleLogger struct{}
@@ -36,9 +35,9 @@ func (l *ConsoleLogger) LogUpdate(update tg.Update, startTime time.Time) {
 	}
 
 	stateText := ""
-	if currentState, ok := states.StateMachineInstance.States[states.NewStateUser(update.Message.From.ID, update.Message.Chat.ID)]; ok {
-		stateText = fmt.Sprintf("[State: %s]", currentState.String())
-	}
+	// if currentState, ok := states.StateMachineInstance.States[states.NewStateUser(update.Message.From.ID, update.Message.Chat.ID)]; ok {
+	// 	stateText = fmt.Sprintf("[State: %s]", currentState.String())
+	// }
 
 	log.Printf("%s[%s] Update: [From: %s] [Data: %s] [Took: %s]\n", stateText, Info.String(), username, text, time.Since(startTime))
 }

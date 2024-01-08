@@ -1,13 +1,12 @@
 package states
 
 import (
-	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/w1png/telegram-bot-template/types"
 )
 
 type State interface {
-	OnEnter(id int64, chatID int64) (tg.MessageConfig, error)
-	OnExit(id int64, chatID int64) (tg.MessageConfig, error)
-	OnMessage(id int64, chatID int64, message string) (tg.MessageConfig, error)
+	OnMessage() types.UpdateHandlerFunction
+	OnCallback(callback_data types.CallbackData) types.UpdateHandlerFunction
 
 	String() string
 }

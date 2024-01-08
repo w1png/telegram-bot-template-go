@@ -4,14 +4,16 @@ import (
 	"time"
 
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/w1png/telegram-bot-template/callbacks"
-	"github.com/w1png/telegram-bot-template/commands"
 	"github.com/w1png/telegram-bot-template/config"
+	"github.com/w1png/telegram-bot-template/errors"
+	"github.com/w1png/telegram-bot-template/handlers/callbacks"
+	"github.com/w1png/telegram-bot-template/handlers/commands"
+	"github.com/w1png/telegram-bot-template/handlers/messages"
 	"github.com/w1png/telegram-bot-template/language"
 	"github.com/w1png/telegram-bot-template/logger"
-	"github.com/w1png/telegram-bot-template/messages"
 	"github.com/w1png/telegram-bot-template/states"
 	"github.com/w1png/telegram-bot-template/storage"
+	"github.com/w1png/telegram-bot-template/types"
 )
 
 type Bot struct {
@@ -38,7 +40,9 @@ func (b *Bot) Run() error {
 
 	for update := range updates {
 		go func(update tg.Update) {
+			startTime := time.Now()
 			b.HandleUpdate(update)
+			logger.LoggerInstance.LogUpdate(update, startTime)
 		}(update)
 	}
 
@@ -49,112 +53,108 @@ func (b *Bot) Stop() {
 	b.Bot.StopReceivingUpdates()
 }
 
+func (b *Bot) SendUnknownError(chat_id int64) {
+	s, err := language.LanguageInstance.Get(language.UnknownError)
+	if err != nil {
+		logger.LoggerInstance.Log(logger.Fatal, err.Error())
+		return
+	}
+	if _, err = b.Bot.Send(tg.NewMessage(chat_id, s)); err != nil {
+		logger.LoggerInstance.Log(logger.Error, errors.NewMessageSendError(err.Error()).Error())
+		return
+	}
+}
+
+func (b *Bot) SendUnknownActionError(chat_id int64) {
+	s, err := language.LanguageInstance.Get(language.UnknownCommand)
+	if err != nil {
+		logger.LoggerInstance.Log(logger.Fatal, err.Error())
+		return
+	}
+	if _, err = b.Bot.Send(tg.NewMessage(chat_id, s)); err != nil {
+		logger.LoggerInstance.Log(logger.Error, errors.NewMessageSendError(err.Error()).Error())
+		return
+	}
+}
+
 func (b *Bot) HandleUpdate(update tg.Update) {
-	startTime := time.Now()
-
-	var msg tg.MessageConfig
-	var err error
-	var shouldEdit bool
-	var editMessage tg.Message
-
-	if err = storage.StorageInstance.CreateUserIfDoesntExist(update.Message.From.ID); err != nil {
+	var telegram_id int64
+	if update.Message != nil {
+		telegram_id = update.Message.From.ID
+	} else if update.CallbackQuery != nil {
+		telegram_id = update.CallbackQuery.From.ID
+	}
+	if err := storage.StorageInstance.CreateUserIfDoesntExist(telegram_id); err != nil {
 		logger.LoggerInstance.Log(logger.Error, err.Error())
-		s, err := language.LanguageInstance.Get(language.UnknownError)
-		if err != nil {
-			logger.LoggerInstance.Log(logger.Fatal, err.Error())
-		}
-		_, err = b.Bot.Send(tg.NewMessage(update.Message.Chat.ID, s))
-		if err != nil {
-			logger.LoggerInstance.Log(logger.Fatal, err.Error())
-		}
-
+		b.SendUnknownError(update.Message.Chat.ID)
 		return
 	}
 
-	// callbacks
+	user, err := storage.StorageInstance.GetUserByTelegramID(telegram_id)
+	if err != nil {
+		b.SendUnknownError(update.Message.Chat.ID)
+		logger.LoggerInstance.Log(logger.Error, err.Error())
+		return
+	}
+
+	state, haveState := states.StateMachineInstance.GetState(
+		states.NewStateUser(telegram_id, telegram_id),
+	)
+
+	var f types.UpdateHandlerFunction
+
 	if update.CallbackQuery != nil {
-		switch update.CallbackQuery.Data {
-		default:
-			msg, err = callbacks.UnknownCallback(update.Message, update)
-			shouldEdit = true
-		}
-
-		editMessage = *update.CallbackQuery.Message
-	}
-
-	// commands
-	if update.Message != nil && update.Message.IsCommand() {
-		switch update.Message.Command() {
-		case "start":
-			msg, err = commands.StartCommand(update.Message, update)
-		case "help":
-			msg, err = commands.HelpCommand(update.Message, update)
-		case "test":
-			msg, err = commands.TestCommand(update.Message, update)
-		default:
-			msg, err = commands.UnknownCommand(update.Message, update)
-		}
-
-		editMessage = *update.Message
-	}
-
-	if update.Message != nil && !update.Message.IsCommand() {
-		currentState, ok := states.StateMachineInstance.States[states.NewStateUser(
-			update.Message.Chat.ID,
-			update.Message.From.ID)]
-
-		if ok {
-			msg, err = currentState.OnMessage(update.Message.From.ID, update.Message.Chat.ID, update.Message.Text)
-		} else {
-			switch update.Message.Text {
-			default:
-				msg, err = messages.UnknownMessage(update.Message, update)
-			}
-		}
-	}
-
-	// send or edit the msg
-	if err == nil {
-		if msg.ReplyToMessageID == -1 {
+		callback_data, err := types.UnmarshalCallbackData(update.CallbackQuery.Data)
+		if err != nil {
+			logger.LoggerInstance.Log(logger.Error, err.Error())
 			return
 		}
 
-		if shouldEdit {
-			markup := tg.NewInlineKeyboardMarkup([]tg.InlineKeyboardButton{})
-			if msg.ReplyMarkup != nil {
-				markup = msg.ReplyMarkup.(tg.InlineKeyboardMarkup)
-			}
-
-			if _, err = b.Bot.Send(tg.NewEditMessageTextAndMarkup(
-				editMessage.Chat.ID,
-				editMessage.MessageID,
-				msg.Text,
-				markup,
-			)); err != nil {
-				logger.LoggerInstance.Log(logger.Error, err.Error())
-			}
+		if haveState {
+			f = state.OnCallback(*callback_data)
 		} else {
-			if _, err = b.Bot.Send(msg); err != nil {
-				logger.LoggerInstance.Log(logger.Error, err.Error())
+			callback_f, ok := callbacks.CallbacksMap[callback_data.Call]
+			if !ok {
+				logger.LoggerInstance.Log(logger.Error, errors.NewUnknownCallbackError(callback_data.Call).Error())
+				b.SendUnknownActionError(update.Message.Chat.ID)
+				return
 			}
+			f = callback_f(*callback_data)
 		}
+
+	} else if update.Message != nil && update.Message.IsCommand() {
+		command_f, ok := commands.CommandsMap[update.Message.Command()]
+		if !ok {
+			b.SendUnknownActionError(update.Message.Chat.ID)
+			return
+		}
+
+		states.StateMachineInstance.DeleteState(states.NewStateUser(telegram_id, telegram_id))
+
+		f = command_f()
+	} else if update.Message != nil && !update.Message.IsCommand() {
+		if haveState {
+			f = state.OnMessage()
+		} else {
+			message_f, ok := messages.MessagesMap[update.Message.Text]
+			if !ok {
+				b.SendUnknownActionError(update.Message.Chat.ID)
+				return
+			}
+			f = message_f()
+		}
+
 	}
 
-	// if error occured during callback or command processing
+	chattable, err := f(b.Bot, update, user)
 	if err != nil {
-		text, err := language.LanguageInstance.Get(language.UnknownError)
-		if err != nil {
-			logger.LoggerInstance.Log(logger.Fatal, err.Error())
-		}
-		msg = tg.NewMessage(update.Message.Chat.ID, text)
-		msg.ReplyToMessageID = update.Message.MessageID
-
-		if _, err = b.Bot.Send(msg); err != nil {
-			logger.LoggerInstance.Log(logger.Error, err.Error())
-		}
-
+		b.SendUnknownError(update.Message.Chat.ID)
 		logger.LoggerInstance.Log(logger.Error, err.Error())
+		return
 	}
 
-	logger.LoggerInstance.LogUpdate(update, startTime)
+	if _, err := b.Bot.Send(chattable); err != nil {
+		logger.LoggerInstance.Log(logger.Error, err.Error())
+		return
+	}
 }

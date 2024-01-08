@@ -1,6 +1,8 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Role int
 
@@ -19,6 +21,7 @@ type User struct {
 func NewUser(telegramID int64) *User {
 	return &User{
 		TelegramID: telegramID,
+		Role:       RoleUser,
 	}
 }
 
