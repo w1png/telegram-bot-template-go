@@ -116,7 +116,7 @@ func (b *Bot) HandleUpdate(update tg.Update) {
 			callback_f, ok := callbacks.CallbacksMap[callback_data.Call]
 			if !ok {
 				logger.LoggerInstance.Log(logger.Error, errors.NewUnknownCallbackError(callback_data.Call).Error())
-				b.SendUnknownActionError(update.Message.Chat.ID)
+				b.SendUnknownActionError(update.CallbackQuery.From.ID)
 				return
 			}
 			f = callback_f(*callback_data)
