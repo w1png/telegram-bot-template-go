@@ -103,7 +103,7 @@ var CommandsMap = map[string]func() types.UpdateHandlerFunction{
 
 You can now use your /greet command.
 
-# ADD IMAGE HERE
+![greet](https://github.com/w1png/telegram-bot-template-go/assets/74238629/d47c7c40-46ae-4cf9-b4b2-c485a4c9f3cc)
 
 # Creating a message handler
 Message handlers are useful for handling keyboard button inputs.
@@ -130,7 +130,8 @@ func StartCommand() types.UpdateHandlerFunction {
 }
 ```
 
-# ADD IMAGE HERE
+![help_start](https://github.com/w1png/telegram-bot-template-go/assets/74238629/7debd3b8-08c3-401f-9044-fc66ccf15248)
+
 
 Create a file in `handlers/messages/` folder i.e. `handlers/messages/help.go`.
 ```go
@@ -165,7 +166,8 @@ var MessagesMap = map[string]func() types.UpdateHandlerFunction{
 
 You can now use your `Help` button.
 
-# ADD IMAGE HERE
+![help](https://github.com/w1png/telegram-bot-template-go/assets/74238629/2373324f-34c0-49cb-8f49-c6d0e54d96da)
+
 
 # Callbacks
 
@@ -236,7 +238,7 @@ func StartCommand() types.UpdateHandlerFunction {
 }
 ```
 
-# ADD IMAGE HERE
+![2024-01-08 2 32 16 PM](https://github.com/w1png/telegram-bot-template-go/assets/74238629/4f2e29c3-93c0-4fe5-8258-ae7499f4daf2)
 
 Create a file in `handlers/callbacks/` folder i.e. `handlers/callbacks/category.go`.
 ```go
@@ -292,7 +294,7 @@ var CallbackMap = map[string]func(types.CallbackData) types.UpdateHandlerFunctio
 
 You can now use your `Open category` button.
 
-# ADD IMAGE HERE
+![2024-01-08 2 45 46 PM](https://github.com/w1png/telegram-bot-template-go/assets/74238629/b945a629-54dd-4948-8ff7-5e6b05845dcf)
 
 # Environment variables
 Environment variables can be added to config/config.go.
