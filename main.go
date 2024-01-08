@@ -17,7 +17,7 @@ import (
 func main() {
 	var err error
 	if err = config.InitConfig(); err != nil {
-		logger.LoggerInstance.Log(logger.Fatal, err.Error())
+		log.Fatal(err)
 	}
 
 	states.InitStateMachine()
