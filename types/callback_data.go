@@ -2,6 +2,11 @@ package types
 
 import "encoding/json"
 
+type StateBackData struct {
+	Destination string `json:"dest"`
+	Data        any    `json:"data"`
+}
+
 type CallbackData struct {
 	Call string `json:"c"`
 	Data any    `json:"d"`
