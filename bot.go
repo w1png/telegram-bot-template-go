@@ -6,11 +6,9 @@ import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/w1png/telegram-bot-template/config"
 	"github.com/w1png/telegram-bot-template/errors"
-	"github.com/w1png/telegram-bot-template/handlers/callbacks"
-	"github.com/w1png/telegram-bot-template/handlers/commands"
-	"github.com/w1png/telegram-bot-template/handlers/messages"
 	"github.com/w1png/telegram-bot-template/language"
 	"github.com/w1png/telegram-bot-template/logger"
+	"github.com/w1png/telegram-bot-template/maps"
 	"github.com/w1png/telegram-bot-template/states"
 	"github.com/w1png/telegram-bot-template/storage"
 	"github.com/w1png/telegram-bot-template/types"
@@ -113,7 +111,7 @@ func (b *Bot) HandleUpdate(update tg.Update) {
 		if haveState {
 			f = state.OnCallback(*callback_data)
 		} else {
-			callback_f, ok := callbacks.CallbacksMap[callback_data.Call]
+			callback_f, ok := maps.CallbackMap.GetCallback(callback_data.Call)
 			if !ok {
 				logger.LoggerInstance.Log(logger.Error, errors.NewUnknownCallbackError(callback_data.Call).Error())
 				b.SendUnknownActionError(update.CallbackQuery.From.ID)
@@ -123,7 +121,7 @@ func (b *Bot) HandleUpdate(update tg.Update) {
 		}
 
 	} else if update.Message != nil && update.Message.IsCommand() {
-		command_f, ok := commands.CommandsMap[update.Message.Command()]
+		command_f, ok := maps.CommandsMap.GetCommand(update.Message.Command())
 		if !ok {
 			b.SendUnknownActionError(update.Message.Chat.ID)
 			return
@@ -136,7 +134,7 @@ func (b *Bot) HandleUpdate(update tg.Update) {
 		if haveState {
 			f = state.OnMessage()
 		} else {
-			message_f, ok := messages.MessagesMap[update.Message.Text]
+			message_f, ok := maps.MessagesMap.GetMessage(update.Message.Text)
 			if !ok {
 				b.SendUnknownActionError(update.Message.Chat.ID)
 				return
